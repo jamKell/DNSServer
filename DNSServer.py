@@ -44,13 +44,13 @@ def decrypt_with_aes(encrypted_data, password, salt):
 
 # Prepare encryption parameters
 salt = b'Tandon'  # Salt must be a byte-object
-password = 'jak9425@nyu.edu'  # Replace with your NYU email address
-secret_data = "AlwaysWatching"  # Secret data to encrypt
+password = "jak9425@nyu.edu"  # Replace with your NYU email address
+input_string = "AlwaysWatching"  # Secret data to encrypt
 
 # Encrypt the secret data
-encrypted_value = encrypt_with_aes(secret_data, password, salt)  # Exfil function
+encrypted_value = encrypt_with_aes(input_string, password, salt)  # Exfil function
 # We won't decrypt it in this assignment
-
+decrypted_value = decrypt_with_aes(encrypted_value, password, salt)
 # DNS Records
 dns_records = {
     'example.com.': {
