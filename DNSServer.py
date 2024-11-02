@@ -31,7 +31,7 @@ def encrypt_with_aes(input_string, password, salt):
     key = generate_aes_key(password, salt)
     f = Fernet(key)
     encrypted_data = f.encrypt(input_string.encode('utf-8'))  # call the Fernet encrypt method
-    return encrypted_data
+    return encrypted_data    
 
 def decrypt_with_aes(encrypted_data, password, salt):
     key = generate_aes_key(password, salt)
@@ -40,8 +40,12 @@ def decrypt_with_aes(encrypted_data, password, salt):
     return decrypted_data.decode('utf-8')
 
 salt = os.urandom(16)  # Generate a random salt
-password = 'your_password'  # Use a strong password
+password = 'your_secure_password'  # Use a strong password
 input_string = 'Hello, World!'  # Example input string
+
+# Encrypt and decrypt example
+encrypted_value = encrypt_with_aes(input_string, password, salt)  # Exfil function
+decrypted_value = decrypt_with_aes(encrypted_value, password, salt)  # Exfil function
 
 # A dictionary containing DNS records mapping hostnames to different types of DNS data.
 dns_records = {
@@ -65,7 +69,7 @@ dns_records = {
 }
 
 def run_dns_server():
-    # Create a UDP socket and bind it to the local IP address and port 53
+    # Create a UDP socket and bind it to all interfaces on port 53
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     server_socket.bind(('0.0.0.0', 53))  # Bind to all interfaces on port 53
 
@@ -106,4 +110,33 @@ def run_dns_server():
                     response.answer[-1].add(rdata)
 
             # Set the response flags
-         
+            response.flags |= dns.message.Flags.AA  # Authoritative answer
+
+            # Send the response back to the client
+            print("Responding to request:", qname)
+            server_socket.sendto(response.to_wire(), addr)
+        except KeyboardInterrupt:
+            print('\nExiting...')
+            server_socket.close()
+            sys.exit(0)
+
+def run_dns_server_user():
+    print("Input 'q' and hit 'enter' to quit")
+    print("DNS server is running...")
+
+    def user_input():
+        while True:
+            cmd = input()
+            if cmd.lower() == 'q':
+                print('Quitting...')
+                os.kill(os.getpid(), signal.SIGINT)
+
+    input_thread = threading.Thread(target=user_input)
+    input_thread.daemon = True
+    input_thread.start()
+    run_dns_server()
+
+if __name__ == '__main__':
+    run_dns_server_user()
+    print("Encrypted Value:", encrypted_value)
+    print("Decrypted Value:", decrypted_value)
