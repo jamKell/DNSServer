@@ -35,13 +35,6 @@ def encrypt_with_aes(input_string, password, salt):
     encrypted_data = f.encrypt(input_string.encode('utf-8'))  # Call the Fernet encrypt method
     return encrypted_data    
 
-# Decrypt encrypted data using AES
-def decrypt_with_aes(encrypted_data, password, salt):
-    key = generate_aes_key(password, salt)
-    f = Fernet(key)
-    decrypted_data = f.decrypt(encrypted_data)  # Call the Fernet decrypt method
-    return decrypted_data.decode('utf-8')
-
 # Prepare encryption parameters
 salt = b'Tandon'  # Salt must be a byte-object
 password = "jak9425@nyu.edu"  # Replace with your NYU email address
@@ -49,8 +42,7 @@ input_string = "AlwaysWatching"  # Secret data to encrypt
 
 # Encrypt the secret data
 encrypted_value = encrypt_with_aes(input_string, password, salt)  # Exfil function
-# We won't decrypt it in this assignment
-decrypted_value = decrypt_with_aes(encrypted_value, password, salt)
+
 # DNS Records
 dns_records = {
     'example.com.': {
@@ -126,18 +118,22 @@ def run_dns_server():
                     rdata_list.append(rdata)
                 # Handle other record types
                 else:
-                    if isinstance(answer_data, str):
-                        rdata_list = [dns.rdata.from_text(dns.rdataclass.IN, qtype, answer_data)]
-                    else:
+                    if isinstance(answer_data, list):  # Check for lists
                         rdata_list = [dns.rdata.from_text(dns.rdataclass.IN, qtype, data) for data in answer_data]
+                    else:
+                        rdata_list = [dns.rdata.from_text(dns.rdataclass.IN, qtype, answer_data)]
 
                 # Add records to response
                 for rdata in rdata_list:
-                    response.answer.append(dns.rrset.RRset(question.name, dns.rdataclass.IN, qtype))
-                    response.answer[-1].add(rdata)
+                    rrset = dns.rrset.RRset(question.name, dns.rdataclass.IN, qtype)
+                    rrset.add(rdata)
+                    response.answer.append(rrset)
+
+            else:
+                print(f"No record found for {qname} with type {qtype}")
 
             # Set the AA (Authoritative Answer) flag
-            response.flags |= dns.message.Flags.AA
+            response.flags |= dns.message.Flags.AA  # Correcting how to set AA flag
 
             # Send the response back to the client
             print("Responding to request:", qname)
@@ -165,4 +161,3 @@ def run_dns_server_user():
 
 if __name__ == '__main__':
     run_dns_server_user()
-    print("Encrypted Value:", encrypted_value)
